@@ -1,5 +1,14 @@
 # Running Waduge Inn publicly
 
+## Railway deployment
+
+1. In Railway, create a project from the GitHub repository `bimsaraka/Waduge-Inn`, branch `main`. The tracked `railway.json` configures Railpack, `npm start`, one replica, and `/healthz`.
+2. In the app service's Variables, set `DATABASE_URL` to the existing Supabase **Session pooler** URI (port 5432), set a strong `ADMIN_PASSWORD`, `NODE_ENV=production`, and `TRUST_PROXY=1`. Copy the needed hotel, bank, currency, and contact settings from your local `.env` into Railway's Variables; never commit the `.env` file. Do not manually set `PORT`.
+3. Under Settings > Networking, generate a public domain. Set `PUBLIC_BASE_URL` to that exact HTTPS URL and deploy the variable changes.
+4. Keep one replica and disable application sleeping for continuous notification processing. Check deployment logs, visit `/healthz` for `{"status":"ok"}`, then verify `/admin` and the guest pages.
+
+The app applies database migrations at startup. Use the existing Supabase database; a new Railway PostgreSQL service is not required. If moving databases later, review SSL settings and migrate existing records first.
+
 This application needs a Node.js server with an outbound PostgreSQL connection. The preview server is for local interface review only; it cannot accept real bookings. Payments remain bank transfers verified by staff.
 
 ## Prepare
