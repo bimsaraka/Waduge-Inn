@@ -90,7 +90,19 @@ function startServer(port) {
 
 if (require.main === module) {
   pool.ready.then(() => { startBookingWorkers(pool); startServer(PORT); }).catch(err => {
-    console.error('Database initialization failed. Server was not started:', err.message);
+    // AggregateError can have an empty message. Log codes, including nested
+    // connection failures, without exposing connection strings or credentials.
+    const codes = new Set();
+    function collectCodes(error) {
+      if (!error) return;
+      if (error.code) codes.add(String(error.code));
+      if (Array.isArray(error.errors)) error.errors.forEach(collectCodes);
+      if (error.cause) collectCodes(error.cause);
+    }
+    collectCodes(err);
+    console.error('Database initialization failed. Server was not started:',
+      codes.size ? [...codes].join(', ') : (err.name || 'UnknownError'));
+    console.error('Check DATABASE_URL in Railway Variables. For Supabase, use the Session pooler URI on port 5432 with the database password.');
     process.exitCode = 1;
     pool.end();
   });

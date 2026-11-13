@@ -11,6 +11,11 @@ const pool = new Pool({
 
 // Apply the same schema for new and existing installations before accepting bookings.
 pool.ready = (async () => {
+  if (!process.env.DATABASE_URL || !process.env.DATABASE_URL.trim()) {
+    const error = new Error('Set DATABASE_URL in the hosting service Variables before deploying.');
+    error.code = 'DATABASE_URL_MISSING';
+    throw error;
+  }
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
