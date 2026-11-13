@@ -1,0 +1,18 @@
+{
+  "name": "waduge-inn",
+  "version": "1.0.0",
+  "description": "Guest House Booking and Management System for Waduge Inn",
+  "main": "server.js",
+  "scripts": {
+    "test": "node --test",
+    "dev": "node server.js",
+    "preview": "node preview.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.22.3",
+    "pg": "^8.23.1"
+  }
+}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Your booking | Waduge Inn</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet"><link rel="stylesheet" href="/guest.css">
+</head>
+<body class="guest-status"><div class="location-strip">WADUGE INN &middot; ABOVE GREGORY LAKE</div>
+  <main>
+    <a href="/" class="wordmark">Waduge Inn<small>NUWARA ELIYA, SRI LANKA</small></a>
+    <article>
+      <p class="eyebrow">YOUR HILL COUNTRY GETAWAY</p><h1>Your stay, <em>at a glance.</em></h1><p class="status-context">Booking details, verified payments, and your latest confirmation status.</p>
+      <p id="notice" role="status" aria-live="polite">Checking your booking…</p>
+      <section id="details" hidden>
+        <p id="status"></p>
+        <p id="explanation"></p>
+        <dl id="summary"></dl>
+        <p id="updated"></p>
+      </section>
+      <button id="refresh" type="button">Refresh status</button>
+      <small>Keep this private link safe. Anyone with the link can view these booking details. Contact reception to request changes.</small>
+    </article>
+  </main>
+  <script src="/booking-status.js" defer></script>
+</body>
+</html>

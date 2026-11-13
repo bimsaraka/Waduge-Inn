@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Portal | Waduge Inn Management</title>
+  <meta name="description" content="Secure administrative control center for managing rooms, rates, and guest bookings at Waduge Inn." />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f6f7f4',
+              100: '#eaede3',
+              200: '#d5dcbe',
+              300: '#b8c595',
+              400: '#9baa6e',
+              500: '#7e8f50',
+              600: '#62713d',
+              700: '#4c5731',
+              800: '#3d4629',
+              900: '#343b25',
+              950: '#1b2011',
+            },
+            accent: {
+              gold: '#c99a4c',
+              goldLight: '#e4bf7a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="font-sans text-stone-800 bg-stone-100 antialiased min-h-screen flex flex-col selection:bg-brand-200 selection:text-brand-900">
+
+  <!-- ==========================================
+       1. FULLSCREEN PIN AUTHENTICATION OVERLAY
+       ========================================== -->
+  <div id="pinOverlay" class="fixed inset-0 z-50 bg-stone-950/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl border border-stone-200 p-8 sm:p-10 max-w-sm w-full shadow-2xl text-center space-y-6">
+      
+      <div class="w-14 h-14 rounded-2xl bg-stone-900 text-accent-gold flex items-center justify-center mx-auto shadow-md">
+        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+
+      <div>
+        <h1 class="font-serif text-2xl font-bold text-stone-900">Admin Authentication</h1>
+        <p class="text-xs text-stone-500 mt-1">Enter your admin password to access the management portal.</p>
+      </div>
+
+      <form id="pinForm" class="space-y-4" novalidate>
+        <div>
+          <input
+            type="password"
+            id="pinInput"
+            maxlength="256"
+            placeholder="••••"
+            autocomplete="current-password"
+            required
+            class="w-full text-center text-2xl tracking-[0.5em] font-mono py-3.5 px-4 bg-stone-50 border border-stone-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-all placeholder:text-stone-300"
+          />
+          <p id="pinErrorMsg" class="hidden text-xs font-semibold text-red-600 mt-2">
+            Incorrect password. Please try again.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          class="w-full py-3.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider bg-stone-900 hover:bg-stone-800 text-white transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-accent-gold"
+        >
+          Unlock Portal
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-stone-100">
+        <a href="/index.html" class="text-xs font-medium text-stone-500 hover:text-stone-800 transition-colors">
+          &larr; Return to Guest Website
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-md w-full px-4 pointer-events-none"></div>
+
+  <!-- ==========================================
+       2. ADMIN NAVBAR
+       ========================================== -->
+  <header class="bg-stone-900 border-b border-stone-800 text-stone-100 sticky top-0 z-40 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        
+        <!-- Brand & Title -->
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-accent-gold to-brand-400 flex items-center justify-center text-stone-950 font-serif font-bold text-lg">
+            W
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="font-serif font-bold text-lg text-white">Waduge Inn</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-accent-gold/20 text-accent-goldLight border border-accent-gold/30">
+                Admin Portal
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Navigation Actions -->
+        <div class="flex items-center gap-3">
+          <a href="/index.html" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-stone-800 hover:bg-stone-700 text-stone-200 transition-colors border border-stone-700">
+            View Website
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+
+          <button id="logoutBtn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-red-950 hover:bg-red-900 text-red-200 border border-red-800 transition-colors">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            Lock / Logout
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       3. MAIN CONTENT (LOCKED/UNLOCKED DYNAMICALLY)
+       ========================================== -->
+  <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- OVERVIEW STATS CARDS (STRICT ZERO DUMMY DATA - CALCULATED LIVE) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-stone-500">Total Rooms</p>
+          <h3 id="statTotalRooms" class="text-2xl font-bold text-stone-900 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-stone-100 text-stone-600 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-amber-600">Pending Bookings</p>
+          <h3 id="statPendingBookings" class="text-2xl font-bold text-stone-900 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-emerald-600">Confirmed Bookings</p>
+          <h3 id="statConfirmedBookings" class="text-2xl font-bold text-stone-900 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-wider text-stone-500">Total Records</p>
+          <h3 id="statTotalBookings" class="text-2xl font-bold text-stone-900 mt-1">0</h3>
+        </div>
+        <div class="w-10 h-10 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==========================================
+         4. ROOM MANAGEMENT SECTION
+         ========================================== -->
+    <section class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Add New Room Form -->
+      <div class="lg:col-span-4 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+        <div class="border-b border-stone-100 pb-3">
+          <span class="text-[11px] font-bold uppercase tracking-wider text-accent-gold">Inventory Setup</span>
+          <h2 class="text-lg font-serif font-bold text-stone-900">Add New Room</h2>
+          <p class="text-xs text-stone-500 mt-0.5">Register a room into the Supabase database.</p>
+        </div>
+
+        <form id="addRoomForm" class="space-y-4" novalidate>
+          <div>
+            <label for="newRoomFloor" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">Floor</label>
+            <select id="newRoomFloor" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm" required>
+              <option value="1">1st Floor</option><option value="2">2nd Floor</option>
+            </select>
+          </div>
+          <div>
+            <label for="newRoomNumber" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+              Room Number / Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="newRoomNumber"
+              placeholder="e.g. 101, A1, Ocean Deluxe"
+              required
+              class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="newRoomType" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+              Room Type <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="newRoomType"
+              placeholder="e.g. Deluxe AC Double, Standard Single"
+              required
+              class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-colors"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="newPricePerNight" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                Price / Night (<span id="roomCurrency">USD</span>, optional)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                id="newPricePerNight"
+                placeholder="e.g. 45.00"
+                class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-colors"
+              />
+            </div>
+
+            <div>
+              <label for="newMaxOccupancy" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+                Max Occupancy (optional)
+              </label>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                id="newMaxOccupancy"
+                value="2"
+                class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="newRoomDescription" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">
+              Description (Optional)
+            </label>
+            <textarea
+              id="newRoomDescription"
+              rows="2"
+              placeholder="e.g. Garden view, queen bed, attached bathroom with hot shower."
+              class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-gold focus:bg-white transition-colors"
+            ></textarea>
+          </div>
+
+          <div>
+            <p class="text-xs text-stone-500 mb-2">Leave price or guest capacity blank if still being confirmed. The room stays visible for enquiries, but cannot be booked online until both are set.</p>
+            <label for="newRoomImage" class="block text-xs font-bold uppercase tracking-wider text-stone-700 mb-1">Room photo URL (optional)</label>
+            <input id="newRoomImage" type="text" maxlength="2000" placeholder="https://… or /assets/your-room.jpg" class="w-full bg-stone-50 border border-stone-300 rounded-xl px-3.5 py-2.5 text-sm">
+            <p class="text-xs text-stone-500 mt-1">Use an actual room photo. Save local photos in public/assets and enter their /assets/ path.</p>
+          </div>
+          <button id="cancelRoomEdit" type="button" hidden class="text-xs underline">Cancel room edit</button>
+          <button
+            type="submit"
+            id="addRoomBtn"
+            class="w-full py-3 px-4 rounded-xl text-xs font-bold bg-stone-900 hover:bg-stone-800 text-white transition-colors flex items-center justify-center gap-2"
+          >
+            <span>Save Room to Database</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Registered Rooms Table -->
+      <div class="lg:col-span-8 bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+        <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-accent-gold">Current Units</span>
+            <h2 class="text-lg font-serif font-bold text-stone-900">Registered Rooms</h2>
+          </div>
+          <button id="refreshRoomsBtn" class="inline-flex items-center text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-50 border border-stone-200 hover:border-stone-300 px-3 py-1.5 rounded-lg transition-colors">
+            <svg id="refreshRoomsIcon" class="w-3.5 h-3.5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-stone-600">
+            <thead class="bg-stone-50 text-stone-700 font-bold uppercase tracking-wider border-b border-stone-200">
+              <tr>
+                <th class="py-3 px-4">Room #</th>
+                <th class="py-3 px-4">Type</th>
+                <th class="py-3 px-4">Price / Night</th>
+                <th class="py-3 px-4">Max Occupancy</th>
+              </tr>
+            </thead>
+            <tbody id="roomsTableBody" class="divide-y divide-stone-100">
+              <!-- Dynamically populated from GET /api/rooms -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rooms Empty State -->
+        <div id="roomsEmptyState" class="py-12 text-center text-stone-500">
+          <div class="w-12 h-12 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto mb-2 text-stone-400">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+          </div>
+          <p class="font-medium text-stone-700 text-sm">No rooms registered yet</p>
+          <p class="text-xs text-stone-400 mt-1">Use the form above to add your first room into the database.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==========================================
+         5. BOOKINGS MANAGEMENT SECTION
+         ========================================== -->
+    <section class="bg-white p-6 rounded-3xl border border-stone-200 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-3 gap-3">
+        <div>
+          <span class="text-[11px] font-bold uppercase tracking-wider text-accent-gold">Reservations</span>
+          <h2 class="text-xl font-serif font-bold text-stone-900">Guest Bookings & Inquiries</h2>
+          <p class="text-xs text-stone-500 mt-0.5">Manage live reservations, confirm or cancel stays, and message guests via WhatsApp.</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="refreshBookingsBtn" class="inline-flex items-center text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-50 border border-stone-200 hover:border-stone-300 px-3.5 py-2 rounded-lg transition-colors">
+            <svg id="refreshBookingsIcon" class="w-3.5 h-3.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Bookings
+          </button>
+        </div>
+      </div>
+
+      <p id="notificationStatus" class="text-xs rounded-xl bg-amber-50 text-amber-900 p-3">Loading notification settings…</p>
+      <p id="bookingReviewNotice" class="hidden text-sm rounded-xl bg-stone-100 p-3" role="status"></p>
+      <div id="confirmationNotice" class="hidden p-4 rounded-xl bg-emerald-50 text-emerald-900 text-sm" role="status">
+        <p id="confirmationHelp"></p>
+        <a id="confirmationLink" target="_blank" rel="noopener noreferrer" class="hidden inline-block mt-2 underline font-semibold">Open guest WhatsApp confirmation</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs text-stone-600">
+          <thead class="bg-stone-50 text-stone-700 font-bold uppercase tracking-wider border-b border-stone-200">
+            <tr>
+              <th class="py-3 px-4">Booking ID</th>
+              <th class="py-3 px-4">Guest Name</th>
+              <th class="py-3 px-4">WhatsApp / Phone</th>
+              <th class="py-3 px-4">Room</th>
+              <th class="py-3 px-4">Dates</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bookingsTableBody" class="divide-y divide-stone-100">
+            <!-- Dynamically populated from GET /api/admin/bookings -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bookings Empty State -->
+      <div id="bookingsEmptyState" class="py-16 text-center text-stone-500">
+        <div class="w-14 h-14 rounded-2xl bg-stone-100 flex items-center justify-center mx-auto mb-3 text-stone-400">
+          <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+        <h3 class="font-serif font-bold text-stone-800 text-base">No booking inquiries received yet</h3>
+        <p class="text-xs text-stone-400 max-w-sm mx-auto mt-1">
+          When visitors submit booking forms through the public website, their records will immediately appear here.
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       6. VANILLA JAVASCRIPT: AUTH & STATE LOGIC
+       ========================================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      const reviewId = new URLSearchParams(location.search).get('booking');
+      let highlightedReview = false;
+      let bookingRefreshTimer;
+      let currency = 'USD';
+      function formatPrice(value) {
+        if (value == null || value === '') return 'Price to be confirmed';
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(value));
+      }
+      const pinOverlay = document.getElementById('pinOverlay');
+      const pinForm = document.getElementById('pinForm');
+      const pinInput = document.getElementById('pinInput');
+      const pinErrorMsg = document.getElementById('pinErrorMsg');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      // Toast Notification System
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        const bgColors = {
+          success: 'bg-emerald-900 border-emerald-700 text-emerald-100',
+          error: 'bg-red-900 border-red-700 text-red-100',
+          info: 'bg-stone-900 border-stone-700 text-stone-100'
+        };
+
+        toast.className = `p-4 rounded-2xl border text-xs font-medium shadow-xl pointer-events-auto transition-all transform translate-y-2 opacity-0 ${bgColors[type] || bgColors.info}`;
+        toast.textContent = message.replace(/<\/?strong>/g, '');
+        container.appendChild(toast);
+
+        setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 50);
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 4000);
+      }
+
+      function lockDashboard() {
+        clearInterval(bookingRefreshTimer);
+        pinOverlay.classList.remove('hidden');
+        document.getElementById('roomsTableBody').replaceChildren();
+        document.getElementById('bookingsTableBody').replaceChildren();
+        ['statTotalRooms', 'statTotalBookings', 'statPendingBookings', 'statConfirmedBookings'].forEach(id => {
+          document.getElementById(id).textContent = '0';
+        });
+        pinInput.value = '';
+        pinInput.focus();
+      }
+
+      async function adminFetch(url, options) {
+        const response = await fetch(url, options);
+        if (response.status === 401) lockDashboard();
+        return response;
+      }
+
+      async function checkAuth() {
+        try {
+          const res = await fetch('/api/admin/session');
+          const data = await res.json();
+          if (data.authenticated) {
+            pinOverlay.classList.add('hidden');
+            initializeDashboard();
+          } else lockDashboard();
+        } catch { lockDashboard(); }
+      }
+
+      pinForm.addEventListener('submit', async e => {
+        e.preventDefault();
+        const button = pinForm.querySelector('button');
+        button.disabled = true;
+        try {
+          const res = await fetch('/api/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pinInput.value })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Login failed.');
+          pinInput.value = '';
+          pinErrorMsg.classList.add('hidden');
+          pinOverlay.classList.add('hidden');
+          initializeDashboard();
+        } catch (err) {
+          pinErrorMsg.textContent = err.message;
+          pinErrorMsg.classList.remove('hidden');
+        } finally { button.disabled = false; }
+      });
+
+      logoutBtn.addEventListener('click', async () => {
+        try {
+          const res = await fetch('/api/admin/logout', { method: 'POST' });
+          if (!res.ok) throw new Error('Logout failed. Please retry.');
+          lockDashboard();
+        } catch { showToast('Could not log out. Please retry.', 'error'); }
+      });
+
+      // 2. Format WhatsApp Phone Helper
+      function sanitizeWhatsApp(phone) {
+        if (!phone) return '';
+        return phone.replace(/[^0-9]/g, '');
+      }
+
+      // 3. Rooms State & API Calls
+      const roomsTableBody = document.getElementById('roomsTableBody');
+      const roomsEmptyState = document.getElementById('roomsEmptyState');
+      const refreshRoomsBtn = document.getElementById('refreshRoomsBtn');
+      const refreshRoomsIcon = document.getElementById('refreshRoomsIcon');
+      const statTotalRooms = document.getElementById('statTotalRooms');
+      const addRoomForm = document.getElementById('addRoomForm');
+      const addRoomBtn = document.getElementById('addRoomBtn');
+      let editingRoomId = null;
+      const cancelRoomEdit = document.getElementById('cancelRoomEdit');
+      function clearRoomEdit() {
+        editingRoomId = null;
+        addRoomForm.reset();
+        cancelRoomEdit.hidden = true;
+        addRoomBtn.textContent = 'Save Room to Database';
+      }
+      cancelRoomEdit.addEventListener('click', clearRoomEdit);
+
+      async function fetchRooms() {
+        if (refreshRoomsIcon) refreshRoomsIcon.classList.add('animate-spin');
+
+        try {
+          const res = await fetch('/api/rooms');
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const result = await res.json();
+          const rooms = Array.isArray(result) ? result : (result.data || []);
+          renderRooms(rooms);
+        } catch (err) {
+          showToast('Could not load room inventory. Refresh to retry.', 'error');
+        } finally {
+          if (refreshRoomsIcon) refreshRoomsIcon.classList.remove('animate-spin');
+        }
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+      }
+
+      function renderRooms(rooms) {
+        statTotalRooms.textContent = rooms.length;
+        roomsTableBody.innerHTML = '';
+
+        if (!rooms || rooms.length === 0) {
+          roomsEmptyState.classList.remove('hidden');
+          return;
+        }
+
+        roomsEmptyState.classList.add('hidden');
+
+        rooms.sort((a, b) => a.floor_number - b.floor_number).forEach(raw => {
+          const room = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, escapeHtml(v)]));
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-stone-50/80 transition-colors';
+          row.innerHTML = `
+            <td class="py-3 px-4 font-bold text-stone-900">${room.room_number || room.roomNumber}</td>
+            <td class="py-3 px-4">
+              <span class="font-medium text-stone-800">${room.room_type || room.roomType}</span>
+              ${room.description ? `<p class="text-[11px] text-stone-400 truncate max-w-xs">${room.description}</p>` : ''}
+            </td>
+            <td class="py-3 px-4 font-semibold text-stone-900">${escapeHtml(formatPrice(raw.price_per_night ?? raw.pricePerNight))}</td>
+            <td class="py-3 px-4">${raw.max_occupancy == null ? 'To be confirmed' : `${room.max_occupancy} Persons`}</td>
+          `;
+          roomsTableBody.appendChild(row);
+          const floorSelect = document.createElement('select');
+          floorSelect.className = 'block mt-2 text-xs border rounded-lg p-1';
+          floorSelect.setAttribute('aria-label', `Floor for room ${raw.room_number}`);
+          floorSelect.add(new Option('1st Floor', '1'));
+          floorSelect.add(new Option('2nd Floor', '2'));
+          floorSelect.value = String(raw.floor_number || 1);
+          row.children[0].appendChild(floorSelect);
+          const edit = document.createElement('button');
+          edit.type = 'button';
+          edit.className = 'block mt-2 text-xs underline';
+          edit.textContent = 'Edit room';
+          edit.setAttribute('aria-label', `Edit room ${raw.room_number}`);
+          row.children[1].appendChild(edit);
+          edit.addEventListener('click', () => {
+            editingRoomId = raw.id;
+            document.getElementById('newRoomNumber').value = raw.room_number;
+            document.getElementById('newRoomType').value = raw.room_type;
+            document.getElementById('newRoomFloor').value = raw.floor_number;
+            document.getElementById('newPricePerNight').value = raw.price_per_night;
+            document.getElementById('newMaxOccupancy').value = raw.max_occupancy;
+            document.getElementById('newRoomDescription').value = raw.description || '';
+            document.getElementById('newRoomImage').value = raw.image_url || '';
+            cancelRoomEdit.hidden = false;
+            addRoomBtn.textContent = 'Save room changes';
+            addRoomForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById('newRoomNumber').focus({ preventScroll: true });
+          });
+          floorSelect.addEventListener('change', async () => {
+            floorSelect.disabled = true;
+            try {
+              const response = await adminFetch(`/api/rooms/${raw.id}/floor`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ floorNumber: Number(floorSelect.value) })
+              });
+              const data = await response.json();
+              if (!response.ok) throw new Error(data.error || 'Could not change floor.');
+              showToast('Room floor updated.', 'success');
+              await fetchRooms();
+            } catch (error) {
+              floorSelect.value = String(raw.floor_number || 1);
+              showToast(error.message, 'error');
+            } finally { floorSelect.disabled = false; }
+          });
+        });
+      }
+
+      // Submit Add Room Form (POST /api/rooms)
+      addRoomForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!addRoomForm.reportValidity()) return;
+
+        const roomNumber = document.getElementById('newRoomNumber').value.trim();
+        const roomType = document.getElementById('newRoomType').value.trim();
+        const pricePerNight = document.getElementById('newPricePerNight').value;
+        const capacityValue = document.getElementById('newMaxOccupancy').value;
+        const maxOccupancy = capacityValue === '' ? null : Number(capacityValue);
+        const description = document.getElementById('newRoomDescription').value.trim();
+
+        if (!roomNumber || !roomType || isNaN(pricePerNight) || isNaN(maxOccupancy)) {
+          showToast('Please provide valid values for all required room fields.', 'error');
+          return;
+        }
+
+        addRoomBtn.disabled = true;
+        addRoomBtn.textContent = 'Saving to Database...';
+
+        try {
+          const res = await adminFetch(editingRoomId ? `/api/rooms/${editingRoomId}` : '/api/rooms', {
+            method: editingRoomId ? 'PATCH' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              roomNumber,
+              floorNumber: Number(document.getElementById('newRoomFloor').value),
+              roomType,
+              pricePerNight,
+              maxOccupancy,
+              description,
+              imageUrl: document.getElementById('newRoomImage').value.trim()
+            })
+          });
+
+          const data = await res.json();
+
+          if (res.ok || res.status === 201) {
+            showToast(`Room ${roomNumber} saved.`, 'success');
+            clearRoomEdit();
+            fetchRooms();
+          } else {
+            showToast(data.error || 'Failed to add room.', 'error');
+          }
+        } catch (err) {
+          showToast('Server connection error while saving room.', 'error');
+        } finally {
+          addRoomBtn.disabled = false;
+          addRoomBtn.textContent = editingRoomId ? 'Save room changes' : 'Save Room to Database';
+        }
+      });
+
+      refreshRoomsBtn?.addEventListener('click', fetchRooms);
+
+      // 4. Bookings State & API Calls
+      const bookingsTableBody = document.getElementById('bookingsTableBody');
+      const bookingsEmptyState = document.getElementById('bookingsEmptyState');
+      const refreshBookingsBtn = document.getElementById('refreshBookingsBtn');
+      const refreshBookingsIcon = document.getElementById('refreshBookingsIcon');
+      const statTotalBookings = document.getElementById('statTotalBookings');
+      const statPendingBookings = document.getElementById('statPendingBookings');
+      const statConfirmedBookings = document.getElementById('statConfirmedBookings');
+
+      async function fetchBookings() {
+        if (refreshBookingsIcon) refreshBookingsIcon.classList.add('animate-spin');
+
+        try {
+          const res = await adminFetch('/api/admin/bookings');
+          if (!res.ok) throw new Error(`Status ${res.status}`);
+          const result = await res.json();
+          const bookings = Array.isArray(result) ? result : (result.data || []);
+          renderBookings(bookings);
+        } catch (err) {
+          showToast('Could not load bookings. Please retry.', 'error');
+        } finally {
+          if (refreshBookingsIcon) refreshBookingsIcon.classList.remove('animate-spin');
+        }
+      }
+
+      function renderBookings(bookings) {
+        const reviewNotice = document.getElementById('bookingReviewNotice');
+        if (reviewId) {
+          reviewNotice.classList.remove('hidden');
+          reviewNotice.textContent = bookings.some(b => b.id === reviewId) ? 'The booking from your message is highlighted below. Review the booking before confirming.' : 'The booking from this link was not found. Check the reference.';
+        }
+        statTotalBookings.textContent = bookings.length;
+        const pending = bookings.filter(b => (b.status || 'pending') === 'pending').length;
+        const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+        statPendingBookings.textContent = pending;
+        statConfirmedBookings.textContent = confirmed;
+
+        bookingsTableBody.innerHTML = '';
+
+        if (!bookings || bookings.length === 0) {
+          bookingsEmptyState.classList.remove('hidden');
+          return;
+        }
+
+        bookingsEmptyState.classList.add('hidden');
+
+        bookings.forEach(raw => {
+          const b = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, escapeHtml(v)]));
+          const cleanPhone = sanitizeWhatsApp(b.guest_phone || b.guestPhone);
+          const floorLabel = Number(raw.floor_number) === 2 ? '2nd Floor' : '1st Floor';
+          const roomLabel = raw.room_id ? `Room ${b.room_number} · ${floorLabel}` : `${floorLabel} · Entire floor`;
+          const checkIn = (b.check_in || b.checkIn || '').split('T')[0];
+          const checkOut = (b.check_out || b.checkOut || '').split('T')[0];
+          const status = b.status || 'pending';
+
+          const badgeStyles = {
+            confirmed: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+            pending: 'bg-amber-100 text-amber-800 border-amber-200',
+            cancelled: 'bg-red-100 text-red-800 border-red-200',
+            expired: 'bg-stone-100 text-stone-600 border-stone-200'
+          };
+
+          const row = document.createElement('tr');
+          row.id = `booking-${b.id}`;
+          row.className = b.id === reviewId ? 'bg-amber-50 ring-2 ring-inset ring-amber-400' : 'hover:bg-stone-50/80 transition-colors';
+          row.innerHTML = `
+            <td class="py-3 px-4 font-mono text-[11px] text-stone-500">${b.id}<p class="mt-1 text-stone-500">Email: ${b.email_status || 'not queued'}</p></td>
+            <td class="py-3 px-4">
+              <span class="font-bold text-stone-900">${b.guest_name || b.guestName}</span>
+              <p class="text-[11px] text-stone-500">${b.guest_email || b.guestEmail}</p>
+              <p class="text-[11px] text-stone-500">${raw.guest_identity ? `${raw.guest_type === 'foreign' ? 'Passport' : 'NIC'}: ${escapeHtml(raw.guest_identity)}` : 'Identity not recorded'}</p>
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-stone-700">${b.guest_phone || b.guestPhone}</span>
+                ${cleanPhone ? `
+                  <a href="https://wa.me/${cleanPhone}" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp" class="p-1 rounded-md bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors">
+                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.007c.106.005.249-.04.39.299.144.347.491 1.2.534 1.287.043.087.072.188.014.303-.058.116-.087.188-.173.289l-.26.303c-.087.087-.179.181-.077.355.101.173.451.744.968 1.205.666.594 1.228.778 1.402.865.174.087.275.072.376-.043.101-.116.433-.506.549-.679.116-.173.231-.144.39-.087s1.011.477 1.184.564.289.13.332.202c.043.072.043.419-.101.824z" />
+                    </svg>
+                  </a>
+                ` : ''}
+              </div>
+            </td>
+            <td class="py-3 px-4 font-medium text-stone-800">${roomLabel}<p class="text-stone-500">${b.guest_count || 1} guests · ${escapeHtml(formatPrice(raw.total_price))}</p></td>
+            <td class="py-3 px-4 font-mono text-[11px] text-stone-600">${checkIn} &rarr; ${checkOut}</td>
+            <td class="py-3 px-4">
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${badgeStyles[status] || badgeStyles.pending}">
+                ${status}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <div class="inline-flex items-center gap-1.5">
+                ${['pending', 'confirmed'].includes(status) ? `
+                  ${b.bank_details_whatsapp_url ? `<a href="${b.bank_details_whatsapp_url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 text-[11px] rounded-lg bg-emerald-50 text-emerald-800">Send bank details</a>` : '<span class="text-[11px] text-amber-800">Set bank details / check guest phone to send instructions.</span>'}
+                  <button type="button" data-payment class="px-2.5 py-1 text-[11px] rounded-lg bg-stone-100">Record verified payment</button>
+                ` : ''}
+                ${status === 'pending' ? `
+                  <button onclick="updateBookingStatus('${b.id}', 'confirmed')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
+                    Confirm
+                  </button>
+                ` : ''}
+                ${status === 'confirmed' && b.confirmation_whatsapp_url ? `
+                  <a href="${b.confirmation_whatsapp_url}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-emerald-600 text-white">Send confirmation</a>
+                ` : ''}
+                ${['pending', 'confirmed'].includes(status) ? `
+                  <button onclick="updateBookingStatus('${b.id}', 'cancelled')" class="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-stone-100 hover:bg-red-50 hover:text-red-700 text-stone-700 transition-colors">
+                    Cancel
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          `;
+          bookingsTableBody.appendChild(row);
+          if (raw.payment) {
+            const summary = document.createElement('p');
+            summary.className = 'text-xs mt-2';
+            summary.textContent = `Bank transfer (${raw.payment_choice === 'full' ? 'full' : 'advance'}): Advance ${raw.payment.advancePercent}%: ${formatPrice(raw.payment.minimumAdvance)} | Verified paid: ${formatPrice(raw.payment.paidAmount)} | Balance: ${formatPrice(raw.payment.balance)} | ${raw.payment.status.replaceAll('_', ' ')}`;
+            row.children[3].appendChild(summary);
+          }
+          row.querySelector('[data-payment]')?.addEventListener('click', async event => {
+            const amount = window.prompt('Verify the bank credit first. Enter TOTAL verified paid so far, including previous payments. This replaces the recorded total.', raw.payment?.paidAmount || '0.00');
+            if (amount === null) return;
+            const reference = window.prompt('Bank transfer reference / verification note (required). For corrections, explain the reason.');
+            if (!reference?.trim()) return;
+            const button = event.currentTarget;
+            button.disabled = true;
+            try {
+              const response = await adminFetch(`/api/admin/bookings/${raw.id}/payment`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ paidAmount: amount, expectedPaidAmount: raw.payment?.paidAmount || '0.00', reference })
+              });
+              const result = await response.json();
+              showToast(response.ok ? 'Verified payment recorded. Confirm the booking when ready.' : (result.error || 'Could not record payment.'), response.ok ? 'success' : 'error');
+              await fetchBookings();
+            } catch { showToast('Could not record payment. Refresh before retrying.', 'error'); }
+            finally { button.disabled = false; }
+          });
+          if (b.id === reviewId && !highlightedReview) {
+            highlightedReview = true;
+            setTimeout(() => row.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+          }
+        });
+      }
+
+      // Update Booking Status Handler (PATCH /api/admin/bookings/:id)
+      window.updateBookingStatus = async (bookingId, newStatus) => {
+        let whatsappWindow = newStatus === 'confirmed' ? window.open('about:blank', '_blank') : null;
+        if (whatsappWindow) whatsappWindow.opener = null;
+        try {
+          const res = await adminFetch(`/api/admin/bookings/${bookingId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (newStatus === 'confirmed') {
+              document.getElementById('confirmationNotice').classList.remove('hidden');
+              const link = document.getElementById('confirmationLink');
+              link.classList.toggle('hidden', !data.confirmationWhatsappUrl);
+              document.getElementById('confirmationHelp').textContent = data.confirmationWhatsappUrl
+                ? 'Booking confirmed. Press Send in WhatsApp to notify the guest. If WhatsApp did not open, use the link below.'
+                : 'Booking confirmed. Check the guest phone number before contacting them on WhatsApp.';
+              if (data.confirmationWhatsappUrl) {
+                link.href = data.confirmationWhatsappUrl;
+                if (whatsappWindow && !whatsappWindow.closed) {
+                  whatsappWindow.location.replace(data.confirmationWhatsappUrl);
+                  whatsappWindow = null;
+                }
+              }
+            }
+            showToast(`Booking marked as <strong>${newStatus}</strong>`, 'success');
+            fetchBookings();
+          } else {
+            const data = await res.json();
+            showToast(data.error || 'Failed to update booking status.', 'error');
+          }
+        } catch (err) {
+          showToast('Network error while updating booking status.', 'error');
+        } finally { if (whatsappWindow && !whatsappWindow.closed) whatsappWindow.close(); }
+      };
+
+      refreshBookingsBtn?.addEventListener('click', fetchBookings);
+
+      async function loadNotificationStatus() {
+        const status = document.getElementById('notificationStatus');
+        try {
+          const res = await adminFetch('/api/admin/notifications');
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          status.textContent = [
+            data.whatsappConfigured ? 'WhatsApp enabled.' : 'WhatsApp is not configured yet.',
+            data.emailConfigured ? 'Email notifications enabled.' : 'Email notifications are not configured yet.',
+            data.bankConfigured ? 'Bank transfer details configured.' : 'Bank transfer details are not configured yet.',
+            'Unsent emails: ' + (data.unsent || 0) + '. Failed: ' + (data.failed || 0) + '.'
+          ].join(' ');
+        } catch { status.textContent = 'Notification status unavailable. Please refresh.'; }
+      }
+
+      async function initializeDashboard() {
+        try {
+          const config = await fetch('/api/config').then(res => res.json());
+          if (/^[A-Z]{3}$/.test(config.currency)) currency = config.currency;
+          document.getElementById('roomCurrency').textContent = currency;
+        } catch { /* Prices retain the default currency when settings cannot be loaded. */ }
+        fetchRooms();
+        fetchBookings();
+        loadNotificationStatus();
+        clearInterval(bookingRefreshTimer);
+        bookingRefreshTimer = setInterval(() => {
+          if (!document.hidden) { fetchBookings(); loadNotificationStatus(); }
+        }, 30000);
+      }
+
+      // Run Auth Check on page load
+      checkAuth();
+    });
+  </script>
+</body>
+</html>

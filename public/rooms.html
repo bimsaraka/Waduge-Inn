@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rooms &amp; floors | Waduge Inn</title>
+  <meta name="description" content="Choose an individual room or an entire floor at Waduge Inn. Check dates, rates and guest capacity before booking.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Rufina:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/guest.css"><link rel="stylesheet" href="/catalog.css">
+  <script src="/guest.js" defer></script><script src="/rooms.js" defer></script>
+</head>
+<body class="guest-catalog">
+  <a href="#main" class="skip-link">Skip to content</a>
+  <div class="location-strip">NUWARA ELIYA, SRI LANKA · ABOVE GREGORY LAKE</div>
+  <header class="site-header"><div class="shell header-inner"><a href="/" class="wordmark"><span class="brand-seal" aria-hidden="true">W</span><span>Waduge Inn<small>A HILL COUNTRY STAY</small></span></a><a href="/" class="text-link">Back to home ↗</a></div></header>
+  <main id="main" class="shell catalog-main">
+    <div class="catalog-heading"><p class="eyebrow">MAKE YOURSELF AT HOME</p><h1>Your room. <em>Your whole floor.</em></h1><p>Find a space for your people. Check your dates, then select a room or an entire floor to continue.</p></div>
+    <form id="availabilityForm" class="availability-form">
+      <div><label for="arrival">Check-in</label><input id="arrival" type="date" required></div>
+      <div><label for="departure">Check-out</label><input id="departure" type="date" required></div>
+      <div><label for="catalogGuests">Guests</label><input id="catalogGuests" type="number" min="1" max="1000" step="1" value="1" required></div>
+      <button type="submit" class="button" id="checkAvailability">Check availability</button>
+    </form>
+    <div class="floor-tabs" role="tablist" aria-label="Choose your floor">
+      <button id="floorTab1" type="button" role="tab" aria-selected="true" aria-controls="floorPanel1" data-floor="1">1st Floor <small>4 rooms · Kitchen</small></button>
+      <button id="floorTab2" type="button" role="tab" aria-selected="false" aria-controls="floorPanel2" tabindex="-1" data-floor="2">2nd Floor <small>2 Triple + 2 Single rooms · Kitchen</small></button>
+    </div>
+    <div class="catalog-toolbar"><p id="catalogStatus" role="status" aria-live="polite">Loading rooms…</p><button id="refreshRoomsBtn" class="text-link" type="button">Refresh rooms</button></div>
+    <div id="catalogResults" class="rooms-catalog" aria-busy="true"></div>
+    <div id="catalogEmpty" class="empty-state" hidden><h2>No rooms listed yet</h2><p>Reception is preparing our room listings. Please contact us to plan your stay.</p><a href="/#contact" class="button">Contact reception</a></div>
+    <p class="catalog-footnote">Entire-floor rates and capacities include all registered rooms on that floor. Availability is checked again when you submit. Payment is by bank transfer; staff verify payment and confirm your stay.</p>
+  </main>
+  <footer class="site-footer shell"><a href="/" class="wordmark">Waduge Inn<small>GREGORY LAKE · NUWARA ELIYA</small></a><span>© <span id="currentYear"></span> Waduge Inn</span><a href="/#contact" class="text-link">Contact reception</a></footer>
+</body>
+</html>
